@@ -1,55 +1,90 @@
-/**
-  ******************************************************************************
-  * File Name          : dma.c
-  * Description        : This file provides code for the configuration
-  *                      of all the requested memory to memory DMA transfers.
-  ******************************************************************************
-  ** This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * COPYRIGHT(c) 2017 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
-/* Includes ------------------------------------------------------------------*/
 #include "dma.h"
 
-void MX_DMA_Init(void) 
+static void DMA_ADC();
+static void DMA_USART();
+
+static LL_DMA_InitTypeDef DMA_InitStruct;
+
+void DMA_Init(void)
 {
-  /* Init with LL driver */
-  /* DMA controller clock enable */
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
-  NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
+	DMA_ADC();
+	DMA_USART();
 }
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+void DMA_ADC()
+{
+	DMA_InitStruct.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+	DMA_InitStruct.MemoryOrM2MDstAddress = (uint32_t)&ADC_data;
+	DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
+	DMA_InitStruct.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+	DMA_InitStruct.Mode = LL_DMA_MODE_CIRCULAR;
+	DMA_InitStruct.NbData = 2;
+	DMA_InitStruct.PeriphOrM2MSrcAddress = LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA);
+	DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
+	DMA_InitStruct.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
+	DMA_InitStruct.PeriphRequest = LL_DMA_REQUEST_0;
+	DMA_InitStruct.Priority = LL_DMA_PRIORITY_MEDIUM;
+	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_1, &DMA_InitStruct);
+
+	NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
+
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+}
+
+static void DMA_USART()
+{
+	DMA_InitStruct.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+	DMA_InitStruct.MemoryOrM2MDstAddress = (uint32_t)&USART_TX_buffer;
+	DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
+	DMA_InitStruct.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+	DMA_InitStruct.Mode = LL_DMA_MODE_NORMAL;
+	DMA_InitStruct.NbData = 0;
+	DMA_InitStruct.PeriphOrM2MSrcAddress = LL_USART_DMA_GetRegAddr(USART2, LL_USART_DMA_REG_DATA_TRANSMIT);
+	DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
+	DMA_InitStruct.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
+	DMA_InitStruct.PeriphRequest = LL_DMA_REQUEST_4;
+	DMA_InitStruct.Priority = LL_DMA_PRIORITY_HIGH;
+	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_2, &DMA_InitStruct);
+
+	NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0);
+	NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
+
+	LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_2);
+	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
+}
+
+void DMA1_Channel1_IRQHandler(void)
+{
+	if(LL_DMA_IsActiveFlag_TC1(DMA1))
+	{
+		ADC_Current = ADC_data[0];
+		ADC_Pos = ADC_data[1];
+
+		LL_DMA_ClearFlag_TC1(DMA1);
+	}
+}
+
+void DMA1_Channel2_3_IRQHandler(void)
+{
+	if(LL_DMA_IsActiveFlag_HT2(DMA1))
+	{
+		LL_USART_EnableIT_TXE(USART2); //enable usart irq to monitor transfer completion
+
+		LL_DMA_ClearFlag_HT2(DMA1);
+	}
+
+	if(LL_DMA_IsActiveFlag_TC2(DMA1))
+	{
+		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
+
+		volatile int i = 0;
+		i = 2;
+
+		LL_DMA_ClearFlag_TC2(DMA1);
+	}
+}

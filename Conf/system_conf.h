@@ -10,6 +10,8 @@
 
 #include "stm32l0xx.h"
 
+#include "system_vars.h"
+
 #include "stm32l0xx_ll_adc.h"
 #include "stm32l0xx_ll_crc.h"
 #include "stm32l0xx_ll_dma.h"

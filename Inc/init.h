@@ -1,10 +1,3 @@
-/*
- * init.h
- *
- *  Created on: 06.12.2017
- *      Author: Tomasz
- */
-
 #ifndef INIT_H_
 #define INIT_H_
 
