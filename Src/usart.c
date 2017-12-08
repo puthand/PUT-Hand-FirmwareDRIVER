@@ -9,7 +9,6 @@ void USART_Init(void)
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
 
 	USART_RS();
-
 }
 
 void USART_RS(void)
@@ -42,8 +41,8 @@ void USART2_IRQHandler(void)
 	{
 		while(LL_USART_IsActiveFlag_RXNE(USART2))
 		{
-			USART_RX_buffer[RX_Ptr] = LL_USART_ReceiveData8(USART2);
-			RX_Ptr++;
+			USART_RX_buffer[USART_RX_Ptr] = LL_USART_ReceiveData8(USART2);
+			USART_RX_Ptr++;
 		}
 	}
 
