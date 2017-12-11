@@ -12,6 +12,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "eeprom.h"
 
 #endif /* __MAIN_H */
 

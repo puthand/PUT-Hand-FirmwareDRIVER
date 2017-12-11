@@ -28,7 +28,7 @@ void DMA_ADC()
 	DMA_InitStruct.Priority = LL_DMA_PRIORITY_MEDIUM;
 	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_1, &DMA_InitStruct);
 
-	NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
+	NVIC_SetPriority(DMA1_Channel1_IRQn, 1);
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
@@ -62,8 +62,28 @@ void DMA1_Channel1_IRQHandler(void)
 {
 	if(LL_DMA_IsActiveFlag_TC1(DMA1))
 	{
-		ADC_Current = ADC_data[0];
-		ADC_Pos = ADC_data[1];
+		//                                                 3300 [mV]
+		//                                          ADC * ---------
+		//           Vout                                   4095
+		//Is = ----------------- [mA] = ----------------------------------
+		//           Rgain                              47000 [Ohm]
+		//     Rs * -------             0,220 [mOhm] * --------------
+		//            Rin                                5000 [Ohm]
+
+		ADC_Current = (uint16_t)(ADC_data[0] * 38968 / 100000);
+
+
+		if(ADC_data[1] < MotorDriver_Settings.POS_ADC_MinValue)
+		{
+			ADC_data[1] = MotorDriver_Settings.POS_ADC_MinValue;
+		}
+
+		if(ADC_data[1] > MotorDriver_Settings.POS_ADC_MaxValue)
+		{
+			ADC_data[1] = MotorDriver_Settings.POS_ADC_MaxValue;
+		}
+
+		ADC_Pos = (ADC_data[1] - MotorDriver_Settings.POS_ADC_MinValue) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue - MotorDriver_Settings.POS_ADC_MinValue);
 
 		LL_DMA_ClearFlag_TC1(DMA1);
 	}
@@ -81,9 +101,6 @@ void DMA1_Channel2_3_IRQHandler(void)
 	if(LL_DMA_IsActiveFlag_TC2(DMA1))
 	{
 		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
-
-		volatile int i = 0;
-		i = 2;
 
 		LL_DMA_ClearFlag_TC2(DMA1);
 	}

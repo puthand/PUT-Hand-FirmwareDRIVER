@@ -50,7 +50,7 @@ void GPIO_MOT_FAULT()
 	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
 	LL_EXTI_Init(&EXTI_InitStruct);
 
-	NVIC_SetPriority(EXTI4_15_IRQn, 0);
+	NVIC_SetPriority(EXTI4_15_IRQn, 1);
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_15);
