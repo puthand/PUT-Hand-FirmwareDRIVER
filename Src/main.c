@@ -15,6 +15,7 @@ int main(void)
 	TIM_Init();
 	USART_Init();
 
+
 	/*static uint8_t USART_TX_ToEncode[24];
 	static uint8_t USART_TX_Encoded_Len;
 

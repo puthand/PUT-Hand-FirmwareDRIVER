@@ -26,7 +26,7 @@ void SysTick_Handler(void)
 	/*static uint8_t USART_TX_ToEncode[24];
 	static uint8_t USART_TX_Encoded_Len;
 
-	i = 10000;
+	//i = 10000;
 	USART_TX_ToEncode[0] = 0x01;
 	USART_TX_ToEncode[1] = SET_PWM_; // CMD
 	USART_TX_ToEncode[2] = ((uint8_t*)&i)[0];

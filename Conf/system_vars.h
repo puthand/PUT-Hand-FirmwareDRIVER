@@ -14,12 +14,14 @@ typedef struct
 #define MotorDriver_Settings_EEPROMAddr		1
 MotorDriver_Settings_TypeDef MotorDriver_Settings;
 
+#define ADC_CurrentScaler					38968 / 100000
+
 volatile uint16_t ADC_data[2];
 volatile uint16_t ADC_Current;
 volatile uint16_t ADC_Pos_Raw;
 volatile uint16_t ADC_Pos;
 
-#define USART_WatchDog_Limit	50
+#define USART_WatchDog_Limit				50
 uint8_t USART_WatchDog_Counter;
 
 typedef enum
@@ -29,7 +31,16 @@ typedef enum
 	CALIBRATE_ = 0x03
 }USART_CMD;
 
-uint8_t USART_TX_buffer[33];
+#define USART_MaxBufferSize					32
+#define USART_b64BufferSize					USART_MaxBufferSize * 6 / 8
+
+uint8_t USART_TX_buffer[USART_MaxBufferSize];
+
+#define CalibrationDelay					0xFFFFFF
+
+#define PWM_MaxValue						1638
+#define PWM_CalibrationValue				200
+#define PWM_Scaler							1 / 40
 
 
 #endif /* SYSTEM_VARS_H_ */

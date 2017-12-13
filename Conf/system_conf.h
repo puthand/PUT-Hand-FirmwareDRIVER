@@ -10,8 +10,6 @@
 
 #include "stm32l0xx.h"
 
-#include "system_vars.h"
-
 #include "stm32l0xx_ll_adc.h"
 #include "stm32l0xx_ll_crc.h"
 #include "stm32l0xx_ll_dma.h"
@@ -26,6 +24,8 @@
 #include "stm32l0xx_ll_tim.h"
 #include "stm32l0xx_ll_usart.h"
 #include "stm32l0xx_ll_gpio.h"
+
+#include "system_vars.h"
 
 #define RS_DRV_EN_Pin 				LL_GPIO_PIN_14
 #define RS_DRV_EN_GPIO_Port 		GPIOC
@@ -49,13 +49,5 @@
 #define UART_TX_GPIO_Port 			GPIOA
 #define UART_RX_Pin 				LL_GPIO_PIN_10
 #define UART_RX_GPIO_Port 			GPIOA
-
-#define ADC_CurrentScaler			38968 / 100000
-
-#define CalibrationDelay			0xFFFFFF
-
-#define PWM_MaxValue				1638
-#define PWM_CalibrationValue		200
-#define PWM_Scaler					1 / 40
 
 #endif /* SYSTEM_CONF_H_ */
