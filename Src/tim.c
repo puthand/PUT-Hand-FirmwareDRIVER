@@ -19,7 +19,7 @@ void TIM_PWM(void)
 {
 	TIM_InitStruct.Prescaler = 0;
 	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-	TIM_InitStruct.Autoreload = 1638; // 65535 / 40
+	TIM_InitStruct.Autoreload = PWM_MaxValue; // 65535 / 40
 	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 	LL_TIM_Init(TIM2, &TIM_InitStruct);
 

@@ -28,7 +28,7 @@ void DMA_ADC()
 	DMA_InitStruct.Priority = LL_DMA_PRIORITY_MEDIUM;
 	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_1, &DMA_InitStruct);
 
-	NVIC_SetPriority(DMA1_Channel1_IRQn, 1);
+	NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
@@ -51,7 +51,7 @@ static void DMA_USART()
 	DMA_InitStruct.Priority = LL_DMA_PRIORITY_HIGH;
 	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_2, &DMA_InitStruct);
 
-	NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0);
+	NVIC_SetPriority(DMA1_Channel2_3_IRQn, 1);
 	NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
 
 	LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_2);
@@ -70,8 +70,9 @@ void DMA1_Channel1_IRQHandler(void)
 		//     Rs * -------             0,220 [mOhm] * --------------
 		//            Rin                                5000 [Ohm]
 
-		ADC_Current = (uint16_t)(ADC_data[0] * 38968 / 100000);
+		ADC_Current = (uint16_t)(ADC_data[0] * ADC_CurrentScaler);
 
+		ADC_Pos_Raw = ADC_data[1];
 
 		if(ADC_data[1] < MotorDriver_Settings.POS_ADC_MinValue)
 		{

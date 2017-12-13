@@ -1,6 +1,7 @@
 #include "usart.h"
 
 #include "base64.h"
+#include "eeprom.h"
 
 static void USART_RS(void);
 
@@ -50,11 +51,8 @@ static uint8_t USART_TX_ToEncode_Len;
 static uint8_t USART_TX_Encoded_Len;
 
 static uint16_t USART_TX_PWMValue;
-
-//static uint8_t USART_Dst_Adr;
-//static uint8_t USART_Cmd;
-//static uint8_t USART_Payload_Size;
-
+static uint16_t PWM1_Value;
+static uint16_t PWM2_Value;
 
 void USART2_IRQHandler(void)
 {
@@ -70,11 +68,11 @@ void USART2_IRQHandler(void)
 				{
 					USART_RX_Decoded_Len = b64_decode(USART_RX_buffer, USART_RX_Ptr, USART_RX_Decoded);
 
-					if(USART_RX_Decoded_Len >= 3)//id packet caintains at leas addr, cmd and crc
+					if(USART_RX_Decoded_Len >= 3)//id packet caintains at least addr, cmd and crc
 					{
 						if(USART_RX_Decoded[0] == MotorDriver_RSAddr || USART_RX_Decoded[0] == 255) //if packet is addressed to this module or broadcast
 						{
-							USART_WatchDog_Counter = 0;
+							USART_WatchDog_Counter = 0; //reset WatchDog counter
 
 							LL_CRC_ResetCRCCalculationUnit(CRC);
 							for(int i = 0; i < USART_RX_Decoded_Len - 1; i++)
@@ -97,18 +95,28 @@ void USART2_IRQHandler(void)
 
 											if((USART_RX_Decoded[4] & 0x01) >> 0) //if freedrive enabled
 											{
-												TIM2->CCR1 = 1638;
-												TIM2->CCR2 = 1638;
+												TIM2->CCR1 = PWM_MaxValue;
+												TIM2->CCR2 = PWM_MaxValue;
 											}else
 											{
-												if((USART_RX_Decoded[4] & 0x02) >> 1) //if right or left
+												if((USART_RX_Decoded[4] & 0x02) >> 1) //0 - towards smaller; 1 - towards higher; POS value
 												{
-													TIM2->CCR1 = USART_TX_PWMValue / 40;
-													TIM2->CCR2 = 0;
+													PWM1_Value = USART_TX_PWMValue * PWM_Scaler;
+													PWM2_Value = 0;
 												}else
 												{
-													TIM2->CCR1 = 0;
-													TIM2->CCR2 = USART_TX_PWMValue / 40;
+													PWM1_Value = 0;
+													PWM2_Value = USART_TX_PWMValue * PWM_Scaler;
+												}
+
+												if(!MotorDriver_Settings.POS_Invert)
+												{
+													TIM2->CCR1 = PWM1_Value;
+													TIM2->CCR2 = PWM2_Value;
+												}else
+												{
+													TIM2->CCR1 = PWM2_Value;
+													TIM2->CCR2 = PWM1_Value;
 												}
 											}
 										}
@@ -121,7 +129,45 @@ void USART2_IRQHandler(void)
 										USART_TX_ToEncode_Len = 6;
 										break;
 									case CALIBRATE_: //calibrate
-										//DO SHIT
+										//blocking approach
+										LL_SYSTICK_DisableIT();
+
+										TIM2->CCR1 = PWM_CalibrationValue;
+										TIM2->CCR2 = 0;
+
+										for(int i=0; i<CalibrationDelay; i++);
+
+										uint16_t ADC_POS1 = ADC_Pos_Raw;
+
+										TIM2->CCR1 = 0;
+										TIM2->CCR2 = PWM_CalibrationValue;
+
+										for(int i=0; i<CalibrationDelay; i++);
+
+										uint16_t ADC_POS2 = ADC_Pos_Raw;
+
+										TIM2->CCR1 = 0;
+										TIM2->CCR2 = 0;
+
+										if(ADC_POS1 > ADC_POS2)
+										{
+											//CCR1 towards higher value
+											MotorDriver_Settings.POS_ADC_MaxValue = ADC_POS1;
+											MotorDriver_Settings.POS_ADC_MinValue = ADC_POS2;
+											MotorDriver_Settings.POS_Invert = 0;
+										}else
+										{
+											//CCR1 towards smaller value
+											MotorDriver_Settings.POS_ADC_MinValue = ADC_POS1;
+											MotorDriver_Settings.POS_ADC_MaxValue = ADC_POS2;
+											MotorDriver_Settings.POS_Invert = 1;
+										}
+
+										EEPROM_Write_MotorDriver_Settings();
+
+										LL_SYSTICK_EnableIT();
+
+										USART_TX_ToEncode_Len = 2;
 										break;
 								}
 

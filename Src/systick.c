@@ -26,11 +26,12 @@ void SysTick_Handler(void)
 	/*static uint8_t USART_TX_ToEncode[24];
 	static uint8_t USART_TX_Encoded_Len;
 
+	i = 10000;
 	USART_TX_ToEncode[0] = 0x01;
 	USART_TX_ToEncode[1] = SET_PWM_; // CMD
 	USART_TX_ToEncode[2] = ((uint8_t*)&i)[0];
 	USART_TX_ToEncode[3] = ((uint8_t*)&i)[1];
-	USART_TX_ToEncode[4] = 0x00;
+	USART_TX_ToEncode[4] = 0x02; //turn into higher value
 
 	LL_CRC_ResetCRCCalculationUnit(CRC);
 	LL_CRC_FeedData8(CRC, USART_TX_ToEncode[0]);
