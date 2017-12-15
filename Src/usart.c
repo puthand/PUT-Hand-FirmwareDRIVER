@@ -14,8 +14,8 @@ void USART_Init(void)
 	USART_RS();
 }
 
-static uint8_t USART_RX_buffer[USART_MaxBufferSize];
-static uint8_t USART_RX_Ptr;
+static volatile uint8_t USART_RX_buffer[USART_MaxBufferSize];
+static volatile uint8_t USART_RX_Ptr;
 
 void USART_RS(void)
 {
@@ -43,16 +43,16 @@ void USART_RS(void)
 	LL_USART_Enable(USART2);
 }
 
-static uint8_t USART_RX_Decoded[USART_b64BufferSize];
-static uint8_t USART_RX_Decoded_Len;
+static volatile uint8_t USART_RX_Decoded[USART_b64BufferSize];
+static volatile uint8_t USART_RX_Decoded_Len;
 
-static uint8_t USART_TX_ToEncode[USART_b64BufferSize];
-static uint8_t USART_TX_ToEncode_Len;
-static uint8_t USART_TX_Encoded_Len;
+static volatile uint8_t USART_TX_ToEncode[USART_b64BufferSize];
+static volatile uint8_t USART_TX_ToEncode_Len;
+static volatile uint8_t USART_TX_Encoded_Len;
 
-static uint16_t USART_TX_PWMValue;
-static uint16_t PWM1_Value;
-static uint16_t PWM2_Value;
+static volatile uint16_t USART_TX_PWMValue;
+static volatile uint16_t PWM1_Value;
+static volatile uint16_t PWM2_Value;
 
 void USART2_IRQHandler(void)
 {
@@ -78,14 +78,14 @@ void USART2_IRQHandler(void)
 
 						if(USART_RX_Decoded[USART_RX_Decoded_Len-1] == LL_CRC_ReadData8(CRC)) //if CRC is ok
 						{
-							USART_WatchDog_Counter = 0; //reset WatchDog counter
-
 							USART_TX_ToEncode[0] = 0x00; // Host
 							USART_TX_ToEncode[1] = USART_RX_Decoded[1]; // CMD
 
 							switch(USART_RX_Decoded[1])//CMD
 							{
 								case SET_PWM_: //new PWM + send status
+									USART_WatchDog_Counter = 0; //reset WatchDog counter when settings update arrives
+
 									if(USART_RX_Decoded_Len >= 6)
 									{
 										((uint8_t*)&USART_TX_PWMValue)[0] = USART_RX_Decoded[2];
@@ -183,6 +183,7 @@ void USART2_IRQHandler(void)
 
 							LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, USART_TX_Encoded_Len); //start USART_TX transfer
 							LL_GPIO_SetOutputPin(RS_DRV_EN_GPIO_Port, RS_DRV_EN_Pin);
+							for(volatile int i=0; i<0xF; i++); //wait for driver enable
 							LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
 						}
 					}
