@@ -111,6 +111,10 @@ void EXTI4_15_IRQHandler(void)
 {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15) != RESET)
 	{
+		TIM2->CCR1 = 0;//stop motor on fault
+		TIM2->CCR2 = 0;
+		CurrentOperation_State = Operation_Fault;
+
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
 	}
 }

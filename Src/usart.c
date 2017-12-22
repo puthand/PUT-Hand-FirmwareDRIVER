@@ -21,13 +21,13 @@ void USART_RS(void)
 {
 	USART_RX_Ptr = 0;
 
-	USART_InitStruct.BaudRate = 1000000;
+	USART_InitStruct.BaudRate = 500000;
 	USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
-	USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+	USART_InitStruct.StopBits = LL_USART_STOPBITS_2;
 	USART_InitStruct.Parity = LL_USART_PARITY_NONE;
 	USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
 	USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-	USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_8;
+	USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
 	LL_USART_Init(USART2, &USART_InitStruct);
 
 	LL_USART_DisableOverrunDetect(USART2);
@@ -88,43 +88,58 @@ void USART2_IRQHandler(void)
 
 									if(USART_RX_Decoded_Len >= 6)
 									{
-										((uint8_t*)&USART_TX_PWMValue)[0] = USART_RX_Decoded[2];
-										((uint8_t*)&USART_TX_PWMValue)[1] = USART_RX_Decoded[3];
-
-										if((USART_RX_Decoded[4] & 0x01) >> 0) //if freedrive enabled
+										if((USART_RX_Decoded[4] & 0x04) >> 2) //0-keep fault flag, 1 - reset fault flag
 										{
-											TIM2->CCR1 = PWM_MaxValue;
-											TIM2->CCR2 = PWM_MaxValue;
+											CurrentOperation_State = Operation_OK;
+										}
+
+										if(CurrentOperation_State == Operation_OK)
+										{
+											((uint8_t*)&USART_TX_PWMValue)[0] = USART_RX_Decoded[2];
+											((uint8_t*)&USART_TX_PWMValue)[1] = USART_RX_Decoded[3];
+
+											if((USART_RX_Decoded[4] & 0x01) >> 0) //if freedrive enabled
+											{
+												TIM2->CCR1 = PWM_MaxValue;
+												TIM2->CCR2 = PWM_MaxValue;
+											}else
+											{
+												if((USART_RX_Decoded[4] & 0x02) >> 1) //0 - towards smaller; 1 - towards higher; POS value
+												{
+													PWM1_Value = USART_TX_PWMValue * PWM_Scaler;
+													PWM2_Value = 0;
+												}else
+												{
+													PWM1_Value = 0;
+													PWM2_Value = USART_TX_PWMValue * PWM_Scaler;
+												}
+
+												if(!MotorDriver_Settings.POS_Invert)
+												{
+													TIM2->CCR1 = PWM1_Value;
+													TIM2->CCR2 = PWM2_Value;
+												}else
+												{
+													TIM2->CCR1 = PWM2_Value;
+													TIM2->CCR2 = PWM1_Value;
+												}
+											}
 										}else
 										{
-											if((USART_RX_Decoded[4] & 0x02) >> 1) //0 - towards smaller; 1 - towards higher; POS value
-											{
-												PWM1_Value = USART_TX_PWMValue * PWM_Scaler;
-												PWM2_Value = 0;
-											}else
-											{
-												PWM1_Value = 0;
-												PWM2_Value = USART_TX_PWMValue * PWM_Scaler;
-											}
-
-											if(!MotorDriver_Settings.POS_Invert)
-											{
-												TIM2->CCR1 = PWM1_Value;
-												TIM2->CCR2 = PWM2_Value;
-											}else
-											{
-												TIM2->CCR1 = PWM2_Value;
-												TIM2->CCR2 = PWM1_Value;
-											}
+											TIM2->CCR1 = 0;//discard PWM data if in foult and no fault flag reset
+											TIM2->CCR2 = 0;
 										}
+
+
 									}
 								case GET_STATE_: //send status
 									USART_TX_ToEncode[2] = ((uint8_t*)&ADC_Current)[0];
 									USART_TX_ToEncode[3] = ((uint8_t*)&ADC_Current)[1];
 									USART_TX_ToEncode[4] = ((uint8_t*)&ADC_Pos)[0];
 									USART_TX_ToEncode[5] = ((uint8_t*)&ADC_Pos)[1];
+									USART_TX_ToEncode[6] = CurrentOperation_State;
 
-									USART_TX_ToEncode_Len = 6;
+									USART_TX_ToEncode_Len = 7;
 									break;
 								case CALIBRATE_: //calibrate
 									//blocking approach
@@ -183,7 +198,6 @@ void USART2_IRQHandler(void)
 
 							LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, USART_TX_Encoded_Len); //start USART_TX transfer
 							LL_GPIO_SetOutputPin(RS_DRV_EN_GPIO_Port, RS_DRV_EN_Pin);
-							for(volatile int i=0; i<0xF; i++); //wait for driver enable
 							LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
 						}
 					}
@@ -203,15 +217,10 @@ void USART2_IRQHandler(void)
 
 	if(LL_USART_IsActiveFlag_TXE(USART2) && LL_USART_IsEnabledIT_TXE(USART2))
 	{
-		LL_USART_DisableIT_TXE(USART2);
-		LL_USART_EnableIT_TC(USART2);
-	}
+		while(!LL_USART_IsActiveFlag_TC(USART2));
 
-	if(LL_USART_IsActiveFlag_TC(USART2) && LL_USART_IsEnabledIT_TC(USART2))
-	{
 		LL_GPIO_ResetOutputPin(RS_DRV_EN_GPIO_Port, RS_DRV_EN_Pin);//disable RS trasmitter
 
-		LL_USART_ClearFlag_TC(USART2);
-		LL_USART_DisableIT_TC(USART2);
+		LL_USART_DisableIT_TXE(USART2);
 	}
 }

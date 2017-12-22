@@ -11,6 +11,14 @@ typedef struct
 	uint8_t		POS_Invert;
 }MotorDriver_Settings_TypeDef;
 
+typedef enum
+{
+	Operation_OK = 0x01,
+	Operation_Fault = 0x02
+}Operation_State;
+
+Operation_State CurrentOperation_State;
+
 #define MotorDriver_Settings_EEPROMAddr		1
 volatile MotorDriver_Settings_TypeDef MotorDriver_Settings;
 
@@ -39,7 +47,7 @@ volatile uint8_t USART_TX_buffer[USART_MaxBufferSize];
 #define CalibrationDelay					0xFFFFFF
 
 #define PWM_MaxValue						1638
-#define PWM_CalibrationValue				200
+#define PWM_CalibrationValue				350
 #define PWM_Scaler							1 / 40
 
 #endif /* SYSTEM_VARS_H_ */
