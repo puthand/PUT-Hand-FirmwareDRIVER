@@ -193,7 +193,7 @@ void USART2_IRQHandler(void)
 							USART_TX_ToEncode_Len++;
 
 							USART_TX_Encoded_Len = b64_encode(USART_TX_ToEncode, USART_TX_ToEncode_Len, USART_TX_buffer);
-							USART_TX_buffer[USART_TX_Encoded_Len] = '\n';
+							USART_TX_buffer[USART_TX_Encoded_Len] = '\r';
 							USART_TX_Encoded_Len++;
 
 							LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, USART_TX_Encoded_Len); //start USART_TX transfer
@@ -204,6 +204,9 @@ void USART2_IRQHandler(void)
 				}
 			}
 
+			USART_RX_Ptr = 0;
+		}else if(USART_RX_buffer[USART_RX_Ptr] == '\r')
+		{
 			USART_RX_Ptr = 0;
 		}else
 		{

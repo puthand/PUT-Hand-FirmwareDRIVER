@@ -13,8 +13,8 @@ typedef struct
 
 typedef enum
 {
-	Operation_OK = 0x01,
-	Operation_Fault = 0x02
+	Operation_OK = 0x00,
+	Operation_Fault = 0x04
 }Operation_State;
 
 Operation_State CurrentOperation_State;
