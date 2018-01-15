@@ -44,10 +44,10 @@ typedef enum
 
 volatile uint8_t USART_TX_buffer[USART_MaxBufferSize];
 
-#define CalibrationDelay					0xFFFFFF
+#define CalibrationDelay					0x23FFFFD
 
 #define PWM_MaxValue						1638
 #define PWM_CalibrationValue				350
-#define PWM_Scaler							1 / 40
+#define PWM_Scaler							1 / 50//1 / 40
 
 #endif /* SYSTEM_VARS_H_ */
