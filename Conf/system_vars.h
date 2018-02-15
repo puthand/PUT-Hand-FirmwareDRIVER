@@ -26,8 +26,15 @@ volatile MotorDriver_Settings_TypeDef MotorDriver_Settings;
 
 volatile uint16_t ADC_data[2];
 volatile uint16_t ADC_Current;
+
+#define ADC_Pos_Raw_History_Size	5
+volatile uint16_t ADC_Pos_Raw_History[ADC_Pos_Raw_History_Size];
+volatile uint8_t ADC_Pos_Raw_History_Ptr;
+volatile uint8_t ADC_FirstCycle;
 volatile uint16_t ADC_Pos_Raw;
 volatile uint16_t ADC_Pos;
+
+
 
 #define USART_WatchDog_Limit				50
 volatile uint8_t USART_WatchDog_Counter;
@@ -47,7 +54,7 @@ volatile uint8_t USART_TX_buffer[USART_MaxBufferSize];
 #define CalibrationDelay					0x23FFFFD
 
 #define PWM_MaxValue						1638
-#define PWM_CalibrationValue				350
-#define PWM_Scaler							1 / 50//1 / 40
+#define PWM_CalibrationValue				700
+#define PWM_Scaler							1 / 50
 
 #endif /* SYSTEM_VARS_H_ */

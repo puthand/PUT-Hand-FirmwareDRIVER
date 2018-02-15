@@ -144,6 +144,8 @@ void USART2_IRQHandler(void)
 								case CALIBRATE_: //calibrate
 									//blocking approach
 									LL_SYSTICK_DisableIT();
+									//enable ADC to acqire data in interrupt style in order to overcome the waiting
+									NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
 
 									TIM2->CCR1 = PWM_CalibrationValue;
 									TIM2->CCR2 = 0;
@@ -178,6 +180,7 @@ void USART2_IRQHandler(void)
 
 									EEPROM_Write_MotorDriver_Settings();
 
+									NVIC_SetPriority(DMA1_Channel1_IRQn, 2);
 									LL_SYSTICK_EnableIT();
 
 									USART_TX_ToEncode_Len = 2;

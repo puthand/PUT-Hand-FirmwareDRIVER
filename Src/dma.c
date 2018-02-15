@@ -28,7 +28,7 @@ void DMA_ADC()
 	DMA_InitStruct.Priority = LL_DMA_PRIORITY_MEDIUM;
 	LL_DMA_Init(DMA1, LL_DMA_CHANNEL_1, &DMA_InitStruct);
 
-	NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
+	NVIC_SetPriority(DMA1_Channel1_IRQn, 2);
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
@@ -58,6 +58,9 @@ static void DMA_USART()
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
 }
 
+static volatile uint32_t ADC_Pos_Raw_Tmp;
+static volatile uint16_t ADC_Pos_Calulation_Tmp;
+
 void DMA1_Channel1_IRQHandler(void)
 {
 	if(LL_DMA_IsActiveFlag_TC1(DMA1))
@@ -72,19 +75,44 @@ void DMA1_Channel1_IRQHandler(void)
 
 		ADC_Current = (uint16_t)(ADC_data[0] * ADC_CurrentScaler);
 
-		ADC_Pos_Raw = ADC_data[1];
-
-		if(ADC_data[1] < MotorDriver_Settings.POS_ADC_MinValue)
+		if(ADC_FirstCycle == 1)
 		{
-			ADC_data[1] = MotorDriver_Settings.POS_ADC_MinValue;
+			for(int i=0; i<ADC_Pos_Raw_History_Size; i++)
+			{
+				ADC_Pos_Raw_History[i] = ADC_data[1];
+			}
+
+			ADC_FirstCycle = 0;
+		}else
+		{
+			ADC_Pos_Raw_History[ADC_Pos_Raw_History_Ptr] = ADC_data[1];
+			ADC_Pos_Raw_History_Ptr++;
+			if(ADC_Pos_Raw_History_Ptr == ADC_Pos_Raw_History_Size)
+			{
+				ADC_Pos_Raw_History_Ptr = 0;
+			}
 		}
 
-		if(ADC_data[1] > MotorDriver_Settings.POS_ADC_MaxValue)
+		ADC_Pos_Raw_Tmp = 0;
+		for(int i=0; i<ADC_Pos_Raw_History_Size; i++)
 		{
-			ADC_data[1] = MotorDriver_Settings.POS_ADC_MaxValue;
+			ADC_Pos_Raw_Tmp += ADC_Pos_Raw_History[i];
+		}
+		ADC_Pos_Raw = ADC_Pos_Raw_Tmp / ADC_Pos_Raw_History_Size;
+
+		ADC_Pos_Calulation_Tmp = ADC_Pos_Raw;
+
+		if(ADC_Pos_Calulation_Tmp< MotorDriver_Settings.POS_ADC_MinValue)
+		{
+			ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MinValue;
 		}
 
-		ADC_Pos = (ADC_data[1] - MotorDriver_Settings.POS_ADC_MinValue) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue - MotorDriver_Settings.POS_ADC_MinValue);
+		if(ADC_Pos_Calulation_Tmp > MotorDriver_Settings.POS_ADC_MaxValue)
+		{
+			ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MaxValue;
+		}
+
+		ADC_Pos = (ADC_Pos_Calulation_Tmp - MotorDriver_Settings.POS_ADC_MinValue) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue - MotorDriver_Settings.POS_ADC_MinValue);
 
 		LL_DMA_ClearFlag_TC1(DMA1);
 	}

@@ -42,13 +42,13 @@ void TIM_ADC_TRIG(void)
 {
 	TIM_InitStruct.Prescaler = 31;
 	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-	TIM_InitStruct.Autoreload = 999;
+	TIM_InitStruct.Autoreload = 8333;
 	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
 	LL_TIM_Init(TIM21, &TIM_InitStruct);
 
 	TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_TOGGLE; //needed to set input in order to ADC trigger from CC2 to work
 	TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-	TIM_OC_InitStruct.CompareValue = 999;
+	TIM_OC_InitStruct.CompareValue = 8333;
 	TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
 	LL_TIM_OC_Init(TIM21, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
 
