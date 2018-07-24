@@ -42,7 +42,6 @@
 #define ISEN_Pin 					LL_GPIO_PIN_4
 #define ISEN_GPIO_Port 				GPIOA
 
-#define POS_Pin 					LL_GPIO_PIN_7
 #define POS_GPIO_Port 				GPIOA
 
 #define UART_TX_Pin 				LL_GPIO_PIN_9

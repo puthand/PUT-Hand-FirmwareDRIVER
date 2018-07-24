@@ -16,11 +16,11 @@ void DMA_Init(void)
 void DMA_ADC()
 {
 	DMA_InitStruct.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
-	DMA_InitStruct.MemoryOrM2MDstAddress = (uint32_t)&ADC_data;
+	DMA_InitStruct.MemoryOrM2MDstAddress = (uint32_t)&ADC_raw;
 	DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
 	DMA_InitStruct.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
 	DMA_InitStruct.Mode = LL_DMA_MODE_CIRCULAR;
-	DMA_InitStruct.NbData = 2;
+	DMA_InitStruct.NbData = ADC_Pos_Count+1;
 	DMA_InitStruct.PeriphOrM2MSrcAddress = LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA);
 	DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
 	DMA_InitStruct.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
@@ -73,19 +73,49 @@ void DMA1_Channel1_IRQHandler(void)
 		//     Rs * -------             0,220 [mOhm] * --------------
 		//            Rin                                5000 [Ohm]
 
+		if(ADC_Pos_Count == 2)
+		{
+			ADC_data[0] = ADC_raw[1]; //ISEN
+			ADC_data[1] = ADC_raw[2]; //POS1
+			ADC_data[2] = ADC_raw[0]; //POS2
+		}else if(ADC_Pos_Count == 3)
+		{
+			ADC_data[0] = ADC_raw[2]; //ISEN
+			ADC_data[1] = ADC_raw[3]; //POS1
+			ADC_data[2] = ADC_raw[0]; //POS2
+			ADC_data[3] = ADC_raw[1]; //POS3
+		}else if(ADC_Pos_Count == 4)
+		{
+			ADC_data[0] = ADC_raw[2]; //ISEN
+			ADC_data[1] = ADC_raw[4]; //POS1
+			ADC_data[2] = ADC_raw[0]; //POS2
+			ADC_data[3] = ADC_raw[1]; //POS3
+			ADC_data[4] = ADC_raw[3]; //POS4
+		}else
+		{
+			ADC_data[0] = ADC_raw[0]; //ISEN
+		    ADC_data[1] = ADC_raw[1]; //POS1
+		}
+
 		ADC_Current = (uint16_t)(ADC_data[0] * ADC_CurrentScaler);
 
 		if(ADC_FirstCycle == 1)
 		{
 			for(int i=0; i<ADC_Pos_Raw_History_Size; i++)
 			{
-				ADC_Pos_Raw_History[i] = ADC_data[1];
+				for(int p=0; p<ADC_Pos_Count; p++)
+				{
+					ADC_Pos_Raw_History[p][i] = ADC_data[p+1];
+				}
 			}
 
 			ADC_FirstCycle = 0;
 		}else
 		{
-			ADC_Pos_Raw_History[ADC_Pos_Raw_History_Ptr] = ADC_data[1];
+			for(int p=0; p<ADC_Pos_Count; p++)
+			{
+				ADC_Pos_Raw_History[p][ADC_Pos_Raw_History_Ptr] = ADC_data[p+1];
+			}
 			ADC_Pos_Raw_History_Ptr++;
 			if(ADC_Pos_Raw_History_Ptr == ADC_Pos_Raw_History_Size)
 			{
@@ -93,26 +123,29 @@ void DMA1_Channel1_IRQHandler(void)
 			}
 		}
 
-		ADC_Pos_Raw_Tmp = 0;
-		for(int i=0; i<ADC_Pos_Raw_History_Size; i++)
+		for(int p=0; p<ADC_Pos_Count; p++)
 		{
-			ADC_Pos_Raw_Tmp += ADC_Pos_Raw_History[i];
+			ADC_Pos_Raw_Tmp = 0;
+			for(int i=0; i<ADC_Pos_Raw_History_Size; i++)
+			{
+				ADC_Pos_Raw_Tmp += ADC_Pos_Raw_History[p][i];
+			}
+			ADC_Pos_Raw[p] = ADC_Pos_Raw_Tmp / ADC_Pos_Raw_History_Size;
+
+			ADC_Pos_Calulation_Tmp = ADC_Pos_Raw[p];
+
+			if(ADC_Pos_Calulation_Tmp < MotorDriver_Settings.POS_ADC_MinValue[p])
+			{
+				ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MinValue[p];
+			}
+
+			if(ADC_Pos_Calulation_Tmp > MotorDriver_Settings.POS_ADC_MaxValue[p])
+			{
+				ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MaxValue[p];
+			}
+
+			ADC_Pos[p] = (ADC_Pos_Calulation_Tmp - MotorDriver_Settings.POS_ADC_MinValue[p]) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue[p] - MotorDriver_Settings.POS_ADC_MinValue[p]);
 		}
-		ADC_Pos_Raw = ADC_Pos_Raw_Tmp / ADC_Pos_Raw_History_Size;
-
-		ADC_Pos_Calulation_Tmp = ADC_Pos_Raw;
-
-		if(ADC_Pos_Calulation_Tmp< MotorDriver_Settings.POS_ADC_MinValue)
-		{
-			ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MinValue;
-		}
-
-		if(ADC_Pos_Calulation_Tmp > MotorDriver_Settings.POS_ADC_MaxValue)
-		{
-			ADC_Pos_Calulation_Tmp = MotorDriver_Settings.POS_ADC_MaxValue;
-		}
-
-		ADC_Pos = (ADC_Pos_Calulation_Tmp - MotorDriver_Settings.POS_ADC_MinValue) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue - MotorDriver_Settings.POS_ADC_MinValue);
 
 		LL_DMA_ClearFlag_TC1(DMA1);
 	}

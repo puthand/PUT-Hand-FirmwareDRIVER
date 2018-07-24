@@ -10,6 +10,7 @@ int main(void)
 	CurrentOperation_State = Operation_OK;
 
 	EEPROM_Read_MotorDriver_RSAddr();
+	EEPROM_Read_ADC_Pos_Count();
 	EEPROM_Read_MotorDriver_Settings();
 
 	SysTick_Init();

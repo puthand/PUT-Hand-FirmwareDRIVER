@@ -4,11 +4,15 @@
 #define MotorDriver_RSAddr_EEPROMAddr		0
 volatile uint8_t MotorDriver_RSAddr;
 
+#define ADC_Pos_Count_EEPROMAddr			1
+#define ADC_Pos_Count_Max					3
+uint8_t ADC_Pos_Count;
+
 typedef struct
 {
-	uint16_t	POS_ADC_MaxValue;
-	uint16_t	POS_ADC_MinValue;
-	uint8_t		POS_Invert;
+	uint16_t	POS_ADC_MaxValue[ADC_Pos_Count_Max];
+	uint16_t	POS_ADC_MinValue[ADC_Pos_Count_Max];
+	uint8_t		POS_Invert[ADC_Pos_Count_Max];
 }MotorDriver_Settings_TypeDef;
 
 typedef enum
@@ -19,22 +23,21 @@ typedef enum
 
 Operation_State CurrentOperation_State;
 
-#define MotorDriver_Settings_EEPROMAddr		1
+#define MotorDriver_Settings_EEPROMAddr		2
 volatile MotorDriver_Settings_TypeDef MotorDriver_Settings;
 
 #define ADC_CurrentScaler					38968 / 100000
 
-volatile uint16_t ADC_data[2];
+volatile uint16_t ADC_raw[1+ADC_Pos_Count_Max];
+volatile uint16_t ADC_data[1+ADC_Pos_Count_Max];
 volatile uint16_t ADC_Current;
 
 #define ADC_Pos_Raw_History_Size	5
-volatile uint16_t ADC_Pos_Raw_History[ADC_Pos_Raw_History_Size];
+volatile uint16_t ADC_Pos_Raw_History[ADC_Pos_Count_Max][ADC_Pos_Raw_History_Size];
 volatile uint8_t ADC_Pos_Raw_History_Ptr;
 volatile uint8_t ADC_FirstCycle;
-volatile uint16_t ADC_Pos_Raw;
-volatile uint16_t ADC_Pos;
-
-
+volatile uint16_t ADC_Pos_Raw[ADC_Pos_Count_Max];
+volatile uint16_t ADC_Pos[ADC_Pos_Count_Max];
 
 #define USART_WatchDog_Limit				50
 volatile uint8_t USART_WatchDog_Counter;

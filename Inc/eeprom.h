@@ -12,6 +12,8 @@
 
 void EEPROM_Read_MotorDriver_RSAddr();
 
+void EEPROM_Read_ADC_Pos_Count();
+
 void EEPROM_Write_MotorDriver_Settings();
 void EEPROM_Read_MotorDriver_Settings();
 

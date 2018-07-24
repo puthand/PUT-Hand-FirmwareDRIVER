@@ -15,6 +15,19 @@ void EEPROM_Read_MotorDriver_RSAddr()
 	MotorDriver_RSAddr =  *(uint8_t*)(DATA_EEPROM_BASE + MotorDriver_RSAddr_EEPROMAddr);
 }
 
+void EEPROM_Read_ADC_Pos_Count()
+{
+	ADC_Pos_Count =  *(uint8_t*)(DATA_EEPROM_BASE + ADC_Pos_Count_EEPROMAddr);
+	if(ADC_Pos_Count > ADC_Pos_Count_Max)
+	{
+		ADC_Pos_Count = ADC_Pos_Count_Max;
+	}
+	if(ADC_Pos_Count == 0)
+	{
+		ADC_Pos_Count = 1;
+	}
+}
+
 void EEPROM_Write_MotorDriver_Settings()
 {
 	EEPROM_Unlock();

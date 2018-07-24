@@ -114,7 +114,7 @@ void USART2_IRQHandler(void)
 													PWM2_Value = USART_TX_PWMValue * PWM_Scaler;
 												}
 
-												if(!MotorDriver_Settings.POS_Invert)
+												if(!MotorDriver_Settings.POS_Invert[0])
 												{
 													TIM2->CCR1 = PWM1_Value;
 													TIM2->CCR2 = PWM2_Value;
@@ -133,13 +133,16 @@ void USART2_IRQHandler(void)
 
 									}
 								case GET_STATE_: //send status
-									USART_TX_ToEncode[2] = ((uint8_t*)&ADC_Current)[0];
-									USART_TX_ToEncode[3] = ((uint8_t*)&ADC_Current)[1];
-									USART_TX_ToEncode[4] = ((uint8_t*)&ADC_Pos)[0];
-									USART_TX_ToEncode[5] = ((uint8_t*)&ADC_Pos)[1];
-									USART_TX_ToEncode[6] = CurrentOperation_State;
+									USART_TX_ToEncode[2] = (ADC_Pos_Count << 4) | CurrentOperation_State;
+									USART_TX_ToEncode[3] = ((uint8_t*)&ADC_Current)[0];
+									USART_TX_ToEncode[4] = ((uint8_t*)&ADC_Current)[1];
+									for(int p=0; p<ADC_Pos_Count; p++)
+									{
+										USART_TX_ToEncode[2*p+5] = ((uint8_t*)&ADC_Pos[p])[0];
+										USART_TX_ToEncode[2*p+6] = ((uint8_t*)&ADC_Pos[p])[1];
+									}
 
-									USART_TX_ToEncode_Len = 7;
+									USART_TX_ToEncode_Len = 5 + 2*(ADC_Pos_Count+1);
 									break;
 								case CALIBRATE_: //calibrate
 									//blocking approach
@@ -152,30 +155,41 @@ void USART2_IRQHandler(void)
 
 									for(int i=0; i<CalibrationDelay; i++);
 
-									uint16_t ADC_POS1 = ADC_Pos_Raw;
+									uint16_t ADC_POS1[ADC_Pos_Count];
+									for(int p=0; p<ADC_Pos_Count; p++)
+									{
+										ADC_POS1[p] = ADC_Pos_Raw[p];
+									}
 
 									TIM2->CCR1 = 0;
 									TIM2->CCR2 = PWM_CalibrationValue;
 
 									for(int i=0; i<CalibrationDelay; i++);
 
-									uint16_t ADC_POS2 = ADC_Pos_Raw;
+									uint16_t ADC_POS2[ADC_Pos_Count];
+									for(int p=0; p<ADC_Pos_Count; p++)
+									{
+										ADC_POS2[p] = ADC_Pos_Raw[p];
+									}
 
 									TIM2->CCR1 = 0;
 									TIM2->CCR2 = 0;
 
-									if(ADC_POS1 > ADC_POS2)
+									for(int p=0; p<ADC_Pos_Count; p++)
 									{
-										//CCR1 towards higher value
-										MotorDriver_Settings.POS_ADC_MaxValue = ADC_POS1;
-										MotorDriver_Settings.POS_ADC_MinValue = ADC_POS2;
-										MotorDriver_Settings.POS_Invert = 0;
-									}else
-									{
-										//CCR1 towards smaller value
-										MotorDriver_Settings.POS_ADC_MinValue = ADC_POS1;
-										MotorDriver_Settings.POS_ADC_MaxValue = ADC_POS2;
-										MotorDriver_Settings.POS_Invert = 1;
+										if(ADC_POS1[p] > ADC_POS2[p])
+										{
+											//CCR1 towards higher value
+											MotorDriver_Settings.POS_ADC_MaxValue[p] = ADC_POS1[p];
+											MotorDriver_Settings.POS_ADC_MinValue[p] = ADC_POS2[p];
+											MotorDriver_Settings.POS_Invert[p] = 0;
+										}else
+										{
+											//CCR1 towards smaller value
+											MotorDriver_Settings.POS_ADC_MinValue[p] = ADC_POS1[p];
+											MotorDriver_Settings.POS_ADC_MaxValue[p] = ADC_POS2[p];
+											MotorDriver_Settings.POS_Invert[p] = 1;
+										}
 									}
 
 									EEPROM_Write_MotorDriver_Settings();
