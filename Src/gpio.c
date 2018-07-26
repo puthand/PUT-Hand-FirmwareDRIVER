@@ -102,11 +102,11 @@ static void GPIO_ADC()
 	LL_GPIO_Init(ISEN_GPIO_Port, &GPIO_InitStruct);
 
 	if(ADC_Pos_Count == 2)
-		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_2;
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_5;
 	else if(ADC_Pos_Count == 3)
-		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_2 | LL_GPIO_PIN_3;
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_5 | LL_GPIO_PIN_3;
 	else if(ADC_Pos_Count == 4)
-		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_2 | LL_GPIO_PIN_3 | LL_GPIO_PIN_5;
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_7 | LL_GPIO_PIN_5 | LL_GPIO_PIN_3 | LL_GPIO_PIN_2;
 	else
 		GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
 
