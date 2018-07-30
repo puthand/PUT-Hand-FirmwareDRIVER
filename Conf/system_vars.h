@@ -5,7 +5,7 @@
 volatile uint8_t MotorDriver_RSAddr;
 
 #define ADC_Pos_Count_EEPROMAddr			1
-#define ADC_Pos_Count_Max					3
+#define ADC_Pos_Count_Max					4
 uint8_t ADC_Pos_Count;
 
 typedef struct

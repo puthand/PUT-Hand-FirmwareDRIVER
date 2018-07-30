@@ -75,22 +75,22 @@ void DMA1_Channel1_IRQHandler(void)
 
 		if(ADC_Pos_Count == 2)
 		{
-			ADC_data[0] = ADC_raw[1]; //ISEN
+			ADC_data[0] = ADC_raw[0]; //ISEN
 			ADC_data[1] = ADC_raw[2]; //POS1
-			ADC_data[2] = ADC_raw[0]; //POS2
+			ADC_data[2] = ADC_raw[1]; //POS2
 		}else if(ADC_Pos_Count == 3)
 		{
-			ADC_data[0] = ADC_raw[2]; //ISEN
+			ADC_data[0] = ADC_raw[1]; //ISEN
 			ADC_data[1] = ADC_raw[3]; //POS1
-			ADC_data[2] = ADC_raw[0]; //POS2
-			ADC_data[3] = ADC_raw[1]; //POS3
+			ADC_data[2] = ADC_raw[2]; //POS2
+			ADC_data[3] = ADC_raw[0]; //POS3
 		}else if(ADC_Pos_Count == 4)
 		{
 			ADC_data[0] = ADC_raw[2]; //ISEN
 			ADC_data[1] = ADC_raw[4]; //POS1
-			ADC_data[2] = ADC_raw[0]; //POS2
+			ADC_data[2] = ADC_raw[3]; //POS2
 			ADC_data[3] = ADC_raw[1]; //POS3
-			ADC_data[4] = ADC_raw[3]; //POS4
+			ADC_data[4] = ADC_raw[0]; //POS4
 		}else
 		{
 			ADC_data[0] = ADC_raw[0]; //ISEN
