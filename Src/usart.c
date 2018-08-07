@@ -156,7 +156,7 @@ void USART2_IRQHandler(void)
 									for(int i=0; i<CalibrationDelay; i++);
 
 									uint16_t ADC_POS1[ADC_Pos_Count];
-									for(int p=0; p<ADC_Pos_Count; p++)
+									/*for(int p=0; p<ADC_Pos_Count; p++)
 									{
 										ADC_POS1[p] = ADC_Pos_Raw[p];
 									}
@@ -170,12 +170,12 @@ void USART2_IRQHandler(void)
 									for(int p=0; p<ADC_Pos_Count; p++)
 									{
 										ADC_POS2[p] = ADC_Pos_Raw[p];
-									}
+									}*/
 
 									TIM2->CCR1 = 0;
 									TIM2->CCR2 = 0;
 
-									for(int p=0; p<ADC_Pos_Count; p++)
+									/*for(int p=0; p<ADC_Pos_Count; p++)
 									{
 										if(ADC_POS1[p] > ADC_POS2[p])
 										{
@@ -190,7 +190,7 @@ void USART2_IRQHandler(void)
 											MotorDriver_Settings.POS_ADC_MaxValue[p] = ADC_POS2[p];
 											MotorDriver_Settings.POS_Invert[p] = 1;
 										}
-									}
+									}*/
 
 									EEPROM_Write_MotorDriver_Settings();
 

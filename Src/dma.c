@@ -61,6 +61,8 @@ static void DMA_USART()
 static volatile uint32_t ADC_Pos_Raw_Tmp;
 static volatile uint16_t ADC_Pos_Calulation_Tmp;
 
+static volatile int32_t ADC_Work_Calc_Tmp;
+
 void DMA1_Channel1_IRQHandler(void)
 {
 	if(LL_DMA_IsActiveFlag_TC1(DMA1))
@@ -109,6 +111,20 @@ void DMA1_Channel1_IRQHandler(void)
 				}
 			}
 
+			for(int i=0; i<ADC_Work_Velocity_History_Size; i++)
+			{
+				ADC_Work_Velocity_History[i] = 0;
+			}
+			ADC_Work_Flag = 0;
+			if(ADC_Pos_Count == 1)
+			{
+				ADC_Work_Pos_Raw_Prev = ADC_data[1];
+			}else
+			{
+				ADC_Work_Pos_Raw_Prev = ADC_data[2];
+			}
+
+
 			ADC_FirstCycle = 0;
 		}else
 		{
@@ -145,6 +161,39 @@ void DMA1_Channel1_IRQHandler(void)
 			}
 
 			ADC_Pos[p] = (ADC_Pos_Calulation_Tmp - MotorDriver_Settings.POS_ADC_MinValue[p]) * 65535 / (MotorDriver_Settings.POS_ADC_MaxValue[p] - MotorDriver_Settings.POS_ADC_MinValue[p]);
+		}
+
+		if(ADC_Pos_Count == 1)
+		{
+			ADC_Work_Velocity_History[ADC_Work_Velocity_History_Ptr] = ADC_Pos_Raw[0] - ADC_Work_Pos_Raw_Prev;
+			ADC_Work_Pos_Raw_Prev = ADC_Pos_Raw[0];
+		}else
+		{
+			ADC_Work_Velocity_History[ADC_Work_Velocity_History_Ptr] = ADC_Pos_Raw[1] - ADC_Work_Pos_Raw_Prev;
+			ADC_Work_Pos_Raw_Prev = ADC_Pos_Raw[1];
+		}
+		ADC_Work_Velocity_History_Ptr++;
+		if(ADC_Work_Velocity_History_Ptr == ADC_Work_Velocity_History_Size)
+		{
+			ADC_Work_Velocity_History_Ptr = 0;
+		}
+
+		ADC_Work_Calc_Tmp = 0;
+		for(int i=0; i<ADC_Work_Velocity_History_Size; i++)
+		{
+			ADC_Work_Calc_Tmp += ADC_Work_Velocity_History[i];
+		}
+		ADC_Work_Calc_Tmp /= ADC_Work_Velocity_History_Size;
+
+		if(ADC_Work_Calc_Tmp > ADC_Work_Velocity_DeadZone)
+		{
+			ADC_Work_Flag = 1;
+		}else if(ADC_Work_Calc_Tmp < -ADC_Work_Velocity_DeadZone)
+		{
+			ADC_Work_Flag = -1;
+		}else
+		{
+			ADC_Work_Flag = 0;
 		}
 
 		LL_DMA_ClearFlag_TC1(DMA1);

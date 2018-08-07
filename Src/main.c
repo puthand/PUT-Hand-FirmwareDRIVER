@@ -5,6 +5,7 @@ int main(void)
 	Init();
 
 	ADC_Pos_Raw_History_Ptr = 0;
+	ADC_Work_Velocity_History_Ptr = 0;
 	ADC_FirstCycle = 1;
 
 	CurrentOperation_State = Operation_OK;

@@ -39,6 +39,14 @@ volatile uint8_t ADC_FirstCycle;
 volatile uint16_t ADC_Pos_Raw[ADC_Pos_Count_Max];
 volatile uint16_t ADC_Pos[ADC_Pos_Count_Max];
 
+#define ADC_Work_Velocity_History_Size		1
+#define ADC_Work_Velocity_DeadZone			2
+
+volatile uint16_t ADC_Work_Pos_Raw_Prev;
+volatile int16_t ADC_Work_Velocity_History[ADC_Work_Velocity_History_Size];
+volatile uint8_t ADC_Work_Velocity_History_Ptr;
+volatile int8_t ADC_Work_Flag;
+
 #define USART_WatchDog_Limit				50
 volatile uint8_t USART_WatchDog_Counter;
 
