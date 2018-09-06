@@ -47,6 +47,7 @@ volatile int16_t ADC_Change_Velocity_History[ADC_Pos_Count_Max][ADC_Change_Veloc
 volatile uint8_t ADC_Change_Velocity_History_Ptr;
 volatile int8_t ADC_Change_Flag[ADC_Pos_Count_Max];
 volatile int8_t Is_Drive_Moving;
+volatile int16_t Is_Moving_2000;
 
 #define USART_WatchDog_Limit				50
 volatile uint8_t USART_WatchDog_Counter;
@@ -64,6 +65,9 @@ typedef enum
 volatile uint8_t USART_TX_buffer[USART_MaxBufferSize];
 
 #define CalibrationDelayFlexion				0xEFFFFF
+//thumb
+//#define CalibrationDelayExtension			0xEFFFFF
+//other
 #define CalibrationDelayExtension			0xEFFFF
 
 #define PWM_MaxValue						1638

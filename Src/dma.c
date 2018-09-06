@@ -1,4 +1,5 @@
 #include "dma.h"
+#include "math.h"
 
 static void DMA_ADC();
 static void DMA_USART();
@@ -165,15 +166,12 @@ void DMA1_Channel1_IRQHandler(void)
 			ADC_Change_Calc_Tmp = 0;
 			for(int i=0; i<ADC_Change_Velocity_History_Size; i++)
 			{
-				ADC_Change_Calc_Tmp += ADC_Change_Velocity_History[p][i];
+				ADC_Change_Calc_Tmp += abs(ADC_Change_Velocity_History[p][i]); // only thumb is programmed with abs of velocity history, others can be reprogrammed
 			}
 
 			if(ADC_Change_Calc_Tmp > ADC_Change_Velocity_Sum_DeadZone)
 			{
 				ADC_Change_Flag[p] = 1;
-			}else if(ADC_Change_Calc_Tmp < -ADC_Change_Velocity_Sum_DeadZone)
-			{
-				ADC_Change_Flag[p] = -1;
 			}else
 			{
 				ADC_Change_Flag[p] = 0;
@@ -203,6 +201,8 @@ void DMA1_Channel1_IRQHandler(void)
 				Is_Drive_Moving = Is_Drive_Moving || ADC_Change_Flag[p];
 			}
 		}
+
+		Is_Moving_2000 = Is_Drive_Moving * 2000;
 
 
 		LL_DMA_ClearFlag_TC1(DMA1);
